@@ -10,7 +10,7 @@ const Stack = createStackNavigator();
 const App = () => {
     return (
         <NavigationContainer>
-            <Stack.Navigator initialRouteName="Signup">
+            <Stack.Navigator initialRouteName="Login">
                 <Stack.Screen
                     name="Signup"
                     component={Signup}
@@ -26,7 +26,8 @@ const App = () => {
                     component={Main}
                     options={{ headerShown: false }}
                 />
-                <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
+                <Stack.Screen name="ForgotPassword" component={ForgotPassword} 
+                 options={{ headerShown: false }}/>
             </Stack.Navigator>
         </NavigationContainer>
     );

@@ -19,9 +19,6 @@ const Search = () => {
                     <AntDesign name="search1" size={24} color="rgba(0,0,0,.5)" />
                     <TextInput placeholder="Search..." style={styles.searchInput} />
                 </View>
-                <View style={styles.cartIcon}>
-                    <AntDesign name="heart" size={34} color="#FF6B6B" />
-                </View>
             </View>
             <Text style={styles.heading}>Find YOUR VINTAGE</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollContainer}>

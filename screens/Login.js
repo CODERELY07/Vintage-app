@@ -1,7 +1,8 @@
 import React, { useState,useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';  
 import { styles } from '../styles/styles';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SQLite from 'expo-sqlite';
 
 const Login = () => {
@@ -17,15 +18,25 @@ const Login = () => {
             const database = await SQLite.openDatabaseAsync('myApp');
             setDb(database);
         };
-        initializeDB(); // Initialize DB once when the component mounts
-    }, []);
+        const checkLoggedInUser = async () => {
+            const userID = await AsyncStorage.getItem('userID');
+            if (userID) {
+                // If userID exists, navigate to Main screen and prevent going back to Login/Signup
+                navigation.reset({
+                    index: 0,
+                    routes: [{ name: 'Main' }],
+                });
+            }
+        };
+        initializeDB(); 
+        checkLoggedInUser();
+    }, [navigation]);
 
     const handleLogin = async () => {
-        // Reset error messages
+
         setUsernameError('');
         setPasswordError('');
 
-        // Basic validation
         if (!username) {
             setUsernameError('Username cannot be empty');
             return;
@@ -36,7 +47,7 @@ const Login = () => {
         }
 
         try {
-            // Check if the username exists in the database
+          
             const userResult = await db.getAllAsync('SELECT * FROM users WHERE username = ?', [username]);
 
             if (userResult.length === 0) {
@@ -44,13 +55,15 @@ const Login = () => {
                 return;
             }
 
-            // Now check if the password matches
+
             if (userResult[0].password !== password) {
                 setPasswordError('Incorrect password');
                 return;
             }
+            await AsyncStorage.setItem('username', userResult[0].username);
+            await AsyncStorage.setItem('email', userResult[0].email);
+            await AsyncStorage.setItem('userID', userResult[0].userID.toString());
 
-            // If both username and password are correct, proceed to login
             navigation.navigate("Main");
 
         } catch (error) {

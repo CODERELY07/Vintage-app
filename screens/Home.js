@@ -1,20 +1,34 @@
 import React from "react";
-import { View, Text, TextInput, Image } from "react-native";
+import { View, Text, TextInput, Image,TouchableOpacity } from "react-native";
 import AntDesign from "react-native-vector-icons/AntDesign";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { styles } from '../styles/styles';
+import { useNavigation } from '@react-navigation/native';  
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Home = () => {
+    const navigation = useNavigation();
+
+    // Logout function
+    const handleLogout = async () => {
+        // Clear AsyncStoragec
+        console.log("hi")
+        await AsyncStorage.clear();
+        // Navigate to Login screen
+        navigation.reset({
+            index: 0,
+            routes: [{ name: 'Login' }],
+        });
+    };
     return (
         <View style={styles.homeContainer}>
             <View style={styles.searchBar}>
-                <View style={styles.searchRow}>
-                    <AntDesign name="search1" size={24} color="rgba(0,0,0,.5)" />
-                    <TextInput placeholder="Search..." style={styles.searchInput} />
-                </View>
                 <View style={styles.cart}>
                     <AntDesign name="heart" size={34} color="#FF6B6B" />
                 </View>
+                <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+                    <Ionicons name="log-out-outline" size={30} color="black" />
+                </TouchableOpacity>
             </View>
             <View>
                 <Text style={styles.heading}>Discover Your Vintage</Text>

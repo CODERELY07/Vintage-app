@@ -63,6 +63,7 @@ export const styles = StyleSheet.create({
         borderRadius: 5,
         flex: 1,
         paddingHorizontal: 8,
+        paddingVertical:12,
         marginRight: 10,
     },
     searchInput: {
@@ -165,4 +166,5 @@ export const styles = StyleSheet.create({
         width: '85%',
         height: '83%',
     },
+    
 });
