@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
 import { useNavigation } from '@react-navigation/native';
 import { styles } from '../styles/styles';
+import * as SQLite from 'expo-sqlite';
 
 const Login = () => {
     const [username, setUsername] = useState('');
@@ -9,11 +10,22 @@ const Login = () => {
     const [usernameError, setUsernameError] = useState('');
     const [passwordError, setPasswordError] = useState('');
     const navigation = useNavigation();
+    const [db, setDb] = useState(null);
 
-    const handleLogin = () => {
-        // Clear previous errors
+    useEffect(() => {
+        const initializeDB = async () => {
+            const database = await SQLite.openDatabaseAsync('myApp');
+            setDb(database);
+        };
+        initializeDB(); // Initialize DB once when the component mounts
+    }, []);
+
+    const handleLogin = async () => {
+        // Reset error messages
         setUsernameError('');
         setPasswordError('');
+
+        // Basic validation
         if (!username) {
             setUsernameError('Username cannot be empty');
             return;
@@ -22,18 +34,31 @@ const Login = () => {
             setPasswordError('Password cannot be empty');
             return;
         }
-        const userSavedName = "Emman";
-        const userSavedPassword = "mypassword01234";
-        if (username !== userSavedName) {
-            setUsernameError('Incorrect username');
-            return;
+
+        try {
+            // Check if the username exists in the database
+            const userResult = await db.getAllAsync('SELECT * FROM users WHERE username = ?', [username]);
+
+            if (userResult.length === 0) {
+                setUsernameError('Username does not exist');
+                return;
+            }
+
+            // Now check if the password matches
+            if (userResult[0].password !== password) {
+                setPasswordError('Incorrect password');
+                return;
+            }
+
+            // If both username and password are correct, proceed to login
+            navigation.navigate("Main");
+
+        } catch (error) {
+            console.error("Error during login:", error);
+            Alert.alert('Error', 'while trying to log in. Please try again.');
         }
-        if (password !== userSavedPassword) {
-            setPasswordError('Incorrect password');
-            return;
-        }
-        navigation.navigate("Main");
     };
+
     return (
         <View style={styles.centerContainer}>
             <Text style={styles.welcomeTitle}>WELCOME!</Text>
@@ -52,7 +77,7 @@ const Login = () => {
             <View style={styles.inputGroup}>
                 <Text style={styles.label}>PASSWORD:</Text>
                 <TextInput
-                    placeholder="Enter your Password"
+                    placeholder="Enter your password"
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry
@@ -60,7 +85,11 @@ const Login = () => {
                 />
                 {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
             </View>
-            <Text style={styles.forgotPasswordText}>FORGOT PASSWORD?</Text>
+
+            <TouchableOpacity onPress={() => navigation.navigate("ForgotPassword")}>
+                <Text style={styles.forgotPasswordText}>FORGOT PASSWORD?</Text>
+            </TouchableOpacity>
+
             <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
                 <Text style={styles.buttonText}>Login</Text>
             </TouchableOpacity>

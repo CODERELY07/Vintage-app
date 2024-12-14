@@ -4,6 +4,7 @@ import { createStackNavigator } from "@react-navigation/stack";
 import Signup from "./screens/Signup";
 import Login from "./screens/Login";
 import Main from "./screens/Main";
+import ForgotPassword from "./screens/ForgotPassword";
 const Stack = createStackNavigator();
 
 const App = () => {
@@ -25,6 +26,7 @@ const App = () => {
                     component={Main}
                     options={{ headerShown: false }}
                 />
+                <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
             </Stack.Navigator>
         </NavigationContainer>
     );

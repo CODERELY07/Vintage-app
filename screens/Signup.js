@@ -1,10 +1,11 @@
-import React, { useState , useEffect} from "react";
+import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
 import { useNavigation } from '@react-navigation/native';
 import { styles } from '../styles/styles';
 import * as SQLite from 'expo-sqlite';
 
-const initDB = async () =>{
+// Initialize database
+const initDB = async () => {
   const db = await SQLite.openDatabaseAsync('myApp');
   await db.execAsync(`
     PRAGMA journal_mode = WAL;
@@ -17,28 +18,7 @@ const initDB = async () =>{
   console.log("Created database");
 }
 initDB();
-const createUsers = async (email, username, password) =>{
-  try{
-    const db = await SQLite.openDatabaseAsync('myApp');
-    const result = db.runAsync('INSERT INTO users (email, username, password) VALUES (?, ?, ?)', [email, username, password]);
-    console.log(result.lastInsertRowId, result.changes);
-  }catch(e){
-    console.log(e);
-  }
-}
-const selectUsers = async () =>{
-  try{
-    const db = await SQLite.openDatabaseAsync('myApp');
-    const allRows = await db.getAllAsync('SELECT * FROM users');
-for (const row of allRows) {
-  console.log(row.userID, row.username, row.email, row.password);
-}
 
-  }catch(e){
-    console.log(e);
-  }
-}
-selectUsers();
 const SignUp = () => {
   const navigation = useNavigation();
 
@@ -51,119 +31,184 @@ const SignUp = () => {
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
-  const [isButtonClicked, setIsButtonClicked] = useState(false);
-  const [isValid,setIsValid] = useState(false);
-  const handleSignUp = () => {
-    // Basic validation
-    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+  const [isValid, setIsValid] = useState(true);
 
-    if(!username){
+  // Function to check if username or email already exists
+  const checkIfUserExists = async () => {
+    const db = await SQLite.openDatabaseAsync('myApp');
+    try {
+      // Check if the email or username already exists
+      const [existingUserByEmail] = await db.getAllAsync("SELECT * FROM users WHERE email = ?", [email]);
+      const [existingUserByUsername] = await db.getAllAsync("SELECT * FROM users WHERE username = ?", [username]);
+
+      if (existingUserByEmail) {
+        setEmailError('Email already in use. Please use a different email.');
+        return false;
+      }
+
+      if (existingUserByUsername) {
+        setUsernameError('Username already exist. Please choose a different username.');
+        return false;
+      }
+
+      // If both email and username are available, return true
+      setEmailError('');
+      setUsernameError('');
+      return true;
+
+    } catch (e) {
+      console.error("Error checking user: ", e);
+      return false;
+    }
+  };
+
+  // Function to create a user
+  const createUser = async () => {
+    const db = await SQLite.openDatabaseAsync('myApp');
+    try {
+      const result = await db.runAsync('INSERT INTO users (email, username, password) VALUES (?, ?, ?)', [email, username, password]);
+      console.log("User created successfully with ID:", result.lastInsertRowId);
+
+      resetForm();
+
+      navigation.navigate("Login");
+    } catch (e) {
+      console.error("Error inserting user: ", e);
+      Alert.alert("Error", "while creating a user");
+    }
+  };
+
+  // Reset form fields and error messages
+  const resetForm = () => {
+    setEmail('');
+    setUsername('');
+    setPassword('');
+    setConfirmPassword('');
+    setEmailError('');
+    setUsernameError('');
+    setPasswordError('');
+    setConfirmPasswordError('');
+    setIsLoading(false);
+    setIsValid(true); // Reset validation state
+  };
+
+  // Validation function
+  const validateForm = () => {
+    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+    let valid = true;
+
+    if (!username) {
       setUsernameError("Please enter a username");
-      setIsValid(false);
-    }else if(username.length < 6){
+      valid = false;
+    } else if (username.length < 6) {
       setUsernameError("Username should be at least 6 characters long");
-      setIsValid(false);
-    }else{
+      valid = false;
+    } else {
       setUsernameError("");
-      setIsValid(true);
     }
 
     if (!email) {
       setEmailError("Please enter an email");
-      setIsValid(false);
+      valid = false;
     } else if (!emailRegex.test(email)) {
       setEmailError("Please enter a valid email address");
-      setIsValid(false);
-    }else{
+      valid = false;
+    } else {
       setEmailError("");
-      setIsValid(true);
     }
 
-    if(!password){
+    if (!password) {
       setPasswordError("Please enter a password");
-      setIsValid(false);
-    }else if(password.length < 6){
+      valid = false;
+    } else if (password.length < 6) {
       setPasswordError("Password should be at least 6 characters long");
-      setIsValid(false);
-    }else{
+      valid = false;
+    } else {
       setPasswordError("");
-      setIsValid(true);
     }
 
-    if(!confirmPassword){
-      setConfirmPasswordError("Please enter to confirm your password");
-      setIsValid(false);
-    }else if (password !== confirmPassword) {
-      setConfirmPasswordError("Password Doesn't Match");  
-      setIsValid(false);
-    }else{
+    if (!confirmPassword) {
+      setConfirmPasswordError("Please confirm your password");
+      valid = false;
+    } else if (password !== confirmPassword) {
+      setConfirmPasswordError("Passwords don't match");
+      valid = false;
+    } else {
       setConfirmPasswordError("");
-      setIsValid(true);
     }
-    setIsButtonClicked(true);
-    if(isValid){
-      setIsButtonClicked(false);
-      createUsers(email, username, password);
-      navigation.navigate("Login");
+
+    setIsValid(valid);
+    return valid;
+  };
+
+  const handleSignUp = async () => {
+    if (isLoading) return;  // Prevent signup if already in progress
+
+    if (validateForm()) {
+      setIsLoading(true);  // Start loading state
+      const userExists = await checkIfUserExists();
+      if (userExists) {
+        await createUser();
+      } else {
+        setIsLoading(false);  // Reset loading state if there's an error
+      }
     }
   };
-  useEffect(()=>{
-    if(isButtonClicked){
-      handleSignUp();
-    }
-  },[username,email,password,confirmPassword]);
 
   return (
     <View style={styles.centerContainer}>
       <Text style={styles.welcomeTitle}>Sign Up</Text>
 
       <View style={styles.inputGroup}>
-          <Text style={styles.label}>USERNAME:</Text>
-          <TextInput
-            style={styles.textInput}
-            placeholder="Enter your Username"
-            value={username}
-            onChangeText={setUsername}
-            keyboardType="username-address"
-          />  
-          {usernameError ? <Text style={styles.errorText}>{usernameError}</Text>: null}
+        <Text style={styles.label}>USERNAME:</Text>
+        <TextInput
+          style={styles.textInput}
+          placeholder="Enter your Username"
+          value={username}
+          onChangeText={setUsername}
+        />
+        {usernameError ? <Text style={styles.errorText}>{usernameError}</Text> : null}
       </View>
+
       <View style={styles.inputGroup}>
-          <Text style={styles.label}>EMAIL:</Text>
-          <TextInput
-            style={styles.textInput}
-            placeholder="Enter your email"
-            value={email}
-            onChangeText={setEmail}
-          />
-          {emailError ? <Text style={styles.errorText}>{emailError}</Text>: null}
+        <Text style={styles.label}>EMAIL:</Text>
+        <TextInput
+          style={styles.textInput}
+          placeholder="Enter your email"
+          value={email}
+          onChangeText={setEmail}
+        />
+        {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
       </View>
+
       <View style={styles.inputGroup}>
-          <Text style={styles.label}>PASSWORD:</Text>
-          <TextInput
-            style={styles.textInput}
-            placeholder="Enter your password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
-          {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> :  null}
+        <Text style={styles.label}>PASSWORD:</Text>
+        <TextInput
+          style={styles.textInput}
+          placeholder="Enter your password"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+        />
+        {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
       </View>
+
       <View style={styles.inputGroup}>
-          <Text style={styles.label}>CONFIRM PASSWORD</Text>
-          <TextInput
-            style={styles.textInput}
-            placeholder="Confirm your password"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            secureTextEntry
-          />
-          {confirmPasswordError ? <Text style={styles.errorText}>{confirmPasswordError}</Text> : null}
+        <Text style={styles.label}>CONFIRM PASSWORD:</Text>
+        <TextInput
+          style={styles.textInput}
+          placeholder="Confirm your password"
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          secureTextEntry
+        />
+        {confirmPasswordError ? <Text style={styles.errorText}>{confirmPasswordError}</Text> : null}
       </View>
+
       <TouchableOpacity
         style={styles.loginButton}
         onPress={handleSignUp}
-        disabled={isLoading}
+        disabled={isLoading}  // Disable the button while loading
       >
         <Text style={styles.buttonText}>
           {isLoading ? "Signing up..." : "Sign Up"}
