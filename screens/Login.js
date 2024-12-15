@@ -21,7 +21,7 @@ const Login = () => {
         const checkLoggedInUser = async () => {
             const userID = await AsyncStorage.getItem('userID');
             if (userID) {
-                // If userID exists, navigate to Main screen and prevent going back to Login/Signup
+
                 navigation.reset({
                     index: 0,
                     routes: [{ name: 'Main' }],
@@ -64,7 +64,11 @@ const Login = () => {
             await AsyncStorage.setItem('email', userResult[0].email);
             await AsyncStorage.setItem('userID', userResult[0].userID.toString());
 
-            navigation.navigate("Main");
+            if (username === 'admin') {
+                navigation.navigate('AdminScreen');
+            } else {
+                navigation.navigate("Main");
+            }
 
         } catch (error) {
             console.error("Error during login:", error);
@@ -108,7 +112,7 @@ const Login = () => {
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.registerLink} onPress={() => navigation.navigate("Signup")}>
-                <Text style={styles.linkText}>Don't have an account? Sign Up</Text>
+                <Text style={[styles.linkText, {marginTop:15,textAlign:'center'}]}>Don't have an account? Sign Up</Text>
             </TouchableOpacity>
         </View>
     );

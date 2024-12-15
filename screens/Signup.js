@@ -15,8 +15,9 @@ const initDB = async () => {
       username TEXT NOT NULL, 
       password TEXT NOT NULL);
   `);
-  console.log("Created database");
-}
+    await db.runAsync('INSERT OR IGNORE INTO users (email, username, password) VALUES (?, ?, ?)', 'admin@gmail.com', 'admin', 'adminn');
+    console.log("Created database");
+    }
 initDB();
 
 const SignUp = () => {
@@ -33,11 +34,11 @@ const SignUp = () => {
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
   const [isValid, setIsValid] = useState(true);
 
-  // Function to check if username or email already exists
+ 
   const checkIfUserExists = async () => {
     const db = await SQLite.openDatabaseAsync('myApp');
     try {
-      // Check if the email or username already exists
+     
       const [existingUserByEmail] = await db.getAllAsync("SELECT * FROM users WHERE email = ?", [email]);
       const [existingUserByUsername] = await db.getAllAsync("SELECT * FROM users WHERE username = ?", [username]);
 
@@ -51,7 +52,6 @@ const SignUp = () => {
         return false;
       }
 
-      // If both email and username are available, return true
       setEmailError('');
       setUsernameError('');
       return true;
@@ -219,7 +219,7 @@ const SignUp = () => {
         style={styles.registerLink}
         onPress={() => navigation.navigate("Login")}
       >
-        <Text style={styles.linkText}>Already have an account? Sign in</Text>
+        <Text style={[styles.linkText, {marginTop:20}]}>Already have an account? Sign in</Text>
       </TouchableOpacity>
     </View>
   );

@@ -5,6 +5,7 @@ import Signup from "./screens/Signup";
 import Login from "./screens/Login";
 import Main from "./screens/Main";
 import ForgotPassword from "./screens/ForgotPassword";
+import AdminScreen from "./screens/AdminScreeen";
 const Stack = createStackNavigator();
 
 const App = () => {
@@ -19,6 +20,11 @@ const App = () => {
                 <Stack.Screen
                     name="Login"
                     component={Login}
+                    options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                    name="AdminScreen"
+                    component={AdminScreen}
                     options={{ headerShown: false }}
                 />
                 <Stack.Screen

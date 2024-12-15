@@ -9,12 +9,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const Home = () => {
     const navigation = useNavigation();
 
-    // Logout function
     const handleLogout = async () => {
-        // Clear AsyncStoragec
         console.log("hi")
         await AsyncStorage.clear();
-        // Navigate to Login screen
+
         navigation.reset({
             index: 0,
             routes: [{ name: 'Login' }],

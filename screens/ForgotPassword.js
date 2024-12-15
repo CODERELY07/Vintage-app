@@ -184,7 +184,7 @@ const ForgotPassword = () => {
         style={styles.registerLink}
         onPress={() => navigation.navigate("Login")}
       >
-        <Text style={styles.linkText}>Back to Login</Text>
+        <Text style={[styles.linkText, {marginTop:15,textAlign:'center'}]}>Back to Login</Text>
       </TouchableOpacity>
     </View>
   );
